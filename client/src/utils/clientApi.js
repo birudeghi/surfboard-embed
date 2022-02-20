@@ -1,42 +1,44 @@
 import axios from 'axios';
 
-const instance = axios.create({
+const appInstance = axios.create({
+    baseURL: "http://localhost:8080",
+    timeout: 10000
+})
+
+const duinoInstance = axios.create({
     baseURL: "http://localhost:3030",
     timeout: 10000
 })
+
 /**
- * Calls GET /account-details to obtain accountUid, categoryUid, and savingsGoalUid.
+ * GET call to URL provided that returns the code to the embed.
  */
-export const getAccountDetails = async () => {
-    return await instance.get("/account-details")
+export const getInfo = async (appId) => {
+    return await appInstance.get(`/app/info/${appId}`)
         .then((response) => {
             return response.data;
         })
-};
-
-
-/**
- * Calls GET /round-up to obtain round up amount.
- * @param {String} accId, the accountUid
- * @param {String} catId, the categoryUid 
- */
-export const roundUp = async (accId, catId) => {
-    return await instance.get(`/round-up/account/${accId}/category/${catId}`)
-        .then((response) => {
-            return response.data.roundUpAmount;
+        .catch((error) => {
+            return error.response;
         })
 };
 
-
 /**
- * Calls POST /transfer to transfer amount into savings goal.
- * @param {string} accId, the accountUid 
- * @param {string} saveId, the savingsGoalUid 
+ * Calls POST /compile to compile sketch.
+ * @param {String} appId, the appId for the embed
  */
-export const transfer = async (amount, accId, saveId) => {
-    return await instance.post(`/transfer/account/${accId}/goal/${saveId}`, {
-        amount: amount
-    })
+export const compile = async (compileInfo) => {
+
+    const req = {
+        fqbn: compileInfo.board.fqbn,
+        files: compileInfo.files,
+        libs: compileInfo.libs,
+        flags: {
+            verbose: false,
+            preferLocal: false
+        }
+    }
+    return await duinoInstance.post("/v3/compile", req)
         .then((response) => {
             return response.data;
         })
