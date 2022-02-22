@@ -5,7 +5,6 @@ import BaseSerial from './BaseSerial';
 const { serial } = navigator;
 
 // eslint-disable-next-line no-console
-console.log('using surfserial');
 class SurfSerial extends BaseSerial {
   constructor() {
     super();

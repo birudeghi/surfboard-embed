@@ -16,20 +16,16 @@ const primitives = {
 
 const theme = createTheme(primitives);
 
-const widgetDivs = document.querySelectorAll('.surfboard-app-board');
-
-widgetDivs.forEach(div => {
-  ReactDOM.render(
+ReactDOM.render(
     <StyletronProvider value={engine}>
         <BaseProvider theme={theme}>
             <React.StrictMode>
-                <App appId={div.dataset.appid}/>
+                <App />
             </React.StrictMode>
         </BaseProvider>
     </StyletronProvider>,
-    div
-  );
-  });
+document.getElementById('root')
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

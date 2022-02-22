@@ -4,10 +4,10 @@ import SurfSerial from './utils/SerialImpl';
 
 const serial = new SurfSerial();
 
-function App() {
+function App(props) {
   return (
       <div className="App">
-        <Surfboard appId="6205267583c793f23ee6b706" serial={serial}/>
+        <Surfboard appId={props.appid} serial={serial}/>
       </div>
   );
 }

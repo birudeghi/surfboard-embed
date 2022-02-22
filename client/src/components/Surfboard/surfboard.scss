@@ -10,6 +10,15 @@ div.editor-container {
     height: 400px
 }
 
+div.surfboard-interactive {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    align-items: center;
+    max-width: 100%;
+}
+
 div.surfboard-config {
     display: flex;
     flex-direction: column;
@@ -33,9 +42,18 @@ div.surfboard-connect-container {
     display: flex;
     justify-content: space-between;
     box-sizing: border-box;
-    flex-direction: column;
+    flex-direction: row;
     height: 100%;
     width: 100%;
-    align-items: flex-end;
+    align-items: center;
 }
 
+div.surfboard-terminal-container {
+    height: 100%;
+    width: 100%;
+
+    div.surfboard-terminal {
+        box-sizing: border-box;
+        overflow-y: scroll;
+    }
+}

@@ -6,7 +6,7 @@ const appInstance = axios.create({
 })
 
 const duinoInstance = axios.create({
-    baseURL: "http://localhost:3030",
+    baseURL: "https://compiler.sfbd.is",
     timeout: 10000
 })
 

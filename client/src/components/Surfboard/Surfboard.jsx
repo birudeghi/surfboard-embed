@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button, SIZE, SHAPE, KIND } from 'baseui/button';
 import { useStyletron } from 'baseui';
 import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { ResizableBox } from 'react-resizable';
 
 import Editor from '../Editor';  
 import Configuration from "../Configuration";
@@ -9,7 +11,13 @@ import { getInfo } from '../../utils/clientApi';
 import { convertBoardApi2Client } from '../../utils/common';
 import { flash } from "../../utils/flash";
 import './surfboard.scss';
+import 'xterm/css/xterm.css';
 import _ from 'lodash';
+
+const term = new Terminal();
+const fitAddon = new FitAddon();
+term.loadAddon(fitAddon);
+fitAddon.fit();
 
 const Surfboard = props => {
     const { appId, serial } = props;
@@ -28,10 +36,17 @@ const Surfboard = props => {
     const [isFlashed, setIsFlashed] = useState(false);
     const [termText, setTermText] = useState("");
 
+    const handleTerminal = async () => {
+        term.open(document.getElementById('surfboard-terminal'));
+        await serial.serial.on('data', function(data) {
+            term.write(data.toString().replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'));
+        });
+    }
+
     useEffect(() => {
         let isSubscribed = true;
 
-        const handleInfo = async () => {
+        const init = async () => {
             const info = await getInfo(appId);
 
             if (isSubscribed) {
@@ -41,10 +56,11 @@ const Surfboard = props => {
                 setBoards(info.compatibleBoards);
                 setIsConnected(serial.connected);
             }
+
+            await handleTerminal();
         };
-        
-        handleInfo();
-        
+
+        init();
 
         return () => isSubscribed = false;
 
@@ -52,7 +68,6 @@ const Surfboard = props => {
 
     const handleSelect = index => {
         const selectedBoard = boards[index];
-        console.log("selectedBoard: ", selectedBoard);
         const flashBoard = convertBoardApi2Client(selectedBoard);
         setSelectBoard(flashBoard);
     }
@@ -79,12 +94,6 @@ const Surfboard = props => {
                 console.log('log: ', log);
                 setIsFlashed(true);
 
-                const term = handleTerminal();
-                serial.serial.on('data', function(data) {
-                    // TODO change: test shouldn't be in the terminal. It doesn't exist yet!
-                    term.write(data.toString().replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'));
-                });
-
             } catch (err) {
                 setIsLoading(false);
                 setErrorMsg(err.message);
@@ -106,8 +115,9 @@ const Surfboard = props => {
                 //isOpen only changes when BroswerSerialPort is instantiated. 
 
                 // there is a way for duinoapp-client to allow avrgirl use existing serialport so that it soedn't have to requestPort again.
-                console.log("serial.connected", serial.connected);
+                
                 setIsConnected(true);
+
             } catch (err) { 
                 setErrorMsg(err.message);
                 console.log('requestDevice rejected');
@@ -124,57 +134,58 @@ const Surfboard = props => {
         setFiles(code);
     }
 
-    const handleTerminal = () => {
-        const term = new Terminal();
-        term.open(document.getElementById('surfboard-terminal'));
-        return term;
-    }
     /*TODO include loading state */
     return (
         <div className="surfboard-container" id='surfboard-container' style={{height:600, width:500}}>
             <div className="surfboard-config">
                 <Editor code={files} onUpdate={handleUpdate} />
             </div>
-            {isFlashed 
-            ? (
-                <div id="surfboard-terminal" />
-            ) 
-            : (
+            <div className="surfboard-interactive">
                 <div className="surfboard-connect-container">
-                <Configuration boards={boards} onSelect={handleSelect} disabled={!isConnected} />
+                    <Configuration boards={boards} onSelect={handleSelect} disabled={!isConnected} />
                     <div className="surfboard-flash">
-                        <p className="surfboard-error-msg">{errorMsg}</p>
-                        {isConnected
+                        {errorMsg 
                         ? (
-                            <Button 
-                                size={SIZE.default}
-                                shape={SHAPE.pill}
-                                onClick={handleFlash}
-                                isLoading={isLoading}
-                                className={css({
-                                    fontWeight: 600,
-                                    ":enabled:hover": {background: "#1F70E9"},
-                                })}
-                                disabled={!selectBoard}
-                            >
-                                Flash
-                            </Button>
+                            <p className="surfboard-error-msg">{errorMsg}</p>
                         )
-                        : (
-                            <Button
-                                size={SIZE.default}
-                                shape={SHAPE.pill}
-                                kind={KIND.secondary}
-                                onClick={handleConnect}
-                                isLoading={isLoading}
-                            >
-                                Connect
-                            </Button>
-                        )}
-                        
+                        : null       
+                        }
+                        {files ? (
+                            isConnected
+                            ? (
+                                <Button 
+                                    size={SIZE.compact}
+                                    shape={SHAPE.pill}
+                                    onClick={handleFlash}
+                                    isLoading={isLoading}
+                                    className={css({
+                                        fontWeight: 600,
+                                        ":enabled:hover": {background: "#1F70E9"},
+                                    })}
+                                    disabled={!selectBoard}
+                                >
+                                    Flash
+                                </Button>
+                            )
+                            : (
+                                <Button
+                                    size={SIZE.compact}
+                                    shape={SHAPE.pill}
+                                    kind={KIND.secondary}
+                                    onClick={handleConnect}
+                                    isLoading={isLoading}
+                                >
+                                    Connect
+                                </Button>
+                            )
+                        ) : null}
                     </div>
                 </div>
-            )}
+                <ResizableBox className="surfboard-terminal-container" height={200} width={500}>
+                    <div className="surfboard-terminal" id="surfboard-terminal" />
+                </ResizableBox>
+               
+            </div>
         </div>
     )
 }
